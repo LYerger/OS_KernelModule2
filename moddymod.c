@@ -27,7 +27,7 @@ MODULE_VERSION("0.1");
 static int majorNumber;
 
 // Try to export mainBuffer so moddymod2.c can access it
-static char mainBuffer[BUFFER_SIZE]= {0};
+char mainBuffer[BUFFER_SIZE]= {0};
 EXPORT_SYMBOL(mainBuffer);
 
 static int bufferOccupation = 0;

@@ -19,7 +19,7 @@ MODULE_VERSION("0.1");
 static int majorNumber;
 
 // Get mainBuffer from shared memory
-extern static char mainBuffer[BUFFER_SIZE]= {0};
+extern char mainBuffer[BUFFER_SIZE];
 
 static int bufferOccupation = 0;
 static int bufferReadIndex = 0;
@@ -131,7 +131,7 @@ static int dev_release(struct inode *inodep, struct file *filep) {
 }
 
 int init_module(void) {
-	printk(KERN_INFO "moddymod: Installing moddymod.\n");
+	printk(KERN_INFO "moddymod2: Installing moddymod2.\n");
 
 	// Try to dynamically allocate a major number for the device
 	majorNumber = register_chrdev(0, DEVICE_NAME, &fops);

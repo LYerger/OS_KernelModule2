@@ -1,4 +1,4 @@
-obj-m += moddymod.o
+obj-m += moddymod2.o moddymod.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
