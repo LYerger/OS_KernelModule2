@@ -9,7 +9,7 @@
 static char receive[BUFFER_LENGTH];     ///< The receive buffer from the LKM
 
 int main(){
-   int ret, fd;
+   int ret, fd, fd2;
    char stringToSend[BUFFER_LENGTH];
    printf("Starting device test code example...\n");
    fd = open("/dev/moddymod", O_RDWR);             // Open the device with read/write access
@@ -31,7 +31,7 @@ int main(){
    getchar();
 
    // To read, must create new fd2 that points to moddymod2
-   fd2 = open("/dev/moddymod2", 0_RDWR);
+   fd2 = open("/dev/moddymod2", O_RDWR);
 
    printf("Reading from the device...\n");
    ret = read(fd2, receive, BUFFER_LENGTH);        // Read the response from the LKM

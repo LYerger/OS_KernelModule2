@@ -1,8 +1,8 @@
 // Contains the Write Module, moddymod2.c contains Read
 
 // Operating Systems (COP4600)
-// Programming Assignment #2: Character Device Kernal Module
-// Submission Date: 3/23/18
+// Programming Assignment #3: 2 Character Device Kernel Modules
+// Submission Date: 4/6/2018
 // Submission By: Brandon Cuevas, Jacquelyn Law, Lorraine Yerger
 // File: moddymod.c
 // Reference Used: http://derekmolloy.ie/writing-a-linux-kernel-module-part-2-a-character-device/
@@ -20,7 +20,7 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Brandon Jacquelyn Lorraine");
-MODULE_DESCRIPTION("Programming Assignment #2: Character Device Kernal Module");
+MODULE_DESCRIPTION("Programming Assignment #3: 2 Character Device Kernal Modules");
 MODULE_VERSION("0.1");
 
 
@@ -28,9 +28,10 @@ static int majorNumber;
 
 // Try to export mainBuffer so moddymod2.c can access it
 char mainBuffer[BUFFER_SIZE]= {0};
-EXPORT_SYMBOL(mainBuffer);
-
 static int bufferOccupation = 0;
+EXPORT_SYMBOL(mainBuffer);
+EXPORT_SYMBOL(bufferOccupation);
+
 // static int bufferReadIndex = 0;
 static int bufferWriteIndex = 0;
 static struct class *modClass = NULL;
@@ -38,12 +39,10 @@ static struct device *modDevice = NULL;
 
 static int dev_open(struct inode *, struct file *);
 static int dev_release(struct inode *, struct file *);
-// static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
 static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
 
 static struct file_operations fops = {
 	.open = dev_open,
-	// .read = dev_read,
 	.write = dev_write,
 	.release = dev_release,
 };
@@ -77,48 +76,6 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 	return len - bytesToReceive;
 }
-
-/** @brief This function is called whenever the device is being read from user space
- *  @param filep A pointer to a file object (defined in linux/fs.h)
- *  @param buffer The pointer to the buffer to which this function writes the data
- *  @param len The length of the b
- *  @param offset The offset if required
- */
- /* Not needed for write module
-static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset) {
-	int errorCount = 0;
-	int sendCount = 0;
-
-
-
-	// While there are things to send and the requested character count has not been met
-	while (sendCount < len && bufferOccupation > 0)
-	{
-		// Keep track of errors and send things to the user
-		errorCount += copy_to_user(buffer + sendCount, mainBuffer + bufferReadIndex, 1);
-		bufferOccupation--;
-		bufferReadIndex++;
-		sendCount++;
-		if (bufferReadIndex > BUFFER_SIZE - 1)
-		{
-			bufferReadIndex = 0;
-		}
-	}
-
-	// If no errors then return the number of characters sent
-	// otherwise, return a bad address message
-	if (errorCount == 0)
-	{
-		printk(KERN_INFO "moddymod: Sent %d characters to the user\n", sendCount);
-		return sendCount;
-	}
-	else
-	{
-		printk(KERN_INFO "moddymod: Failed to send %d characters to the user\n", sendCount);
-		return -EFAULT;
-	}
-}
-*/
 
 /** @brief The device open function that is called each time the device is opened
  *  @param inodep A pointer to an inode object (defined in linux/fs.h)
