@@ -1,11 +1,4 @@
-// Contains the Write Module, moddymod2.c contains Read
-
-// Operating Systems (COP4600)
-// Programming Assignment #2: Character Device Kernal Module
-// Submission Date: 3/23/18
-// Submission By: Brandon Cuevas, Jacquelyn Law, Lorraine Yerger
-// File: moddymod.c
-// Reference Used: http://derekmolloy.ie/writing-a-linux-kernel-module-part-2-a-character-device/
+// Contains the Read module, moddymod.c contains Write
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -15,7 +8,7 @@
 #include <linux/uaccess.h>
 
 #define BUFFER_SIZE 1024
-#define DEVICE_NAME "moddymod"
+#define DEVICE_NAME "moddymod2"
 #define CLASS_NAME "mod"
 
 MODULE_LICENSE("GPL");
@@ -23,28 +16,26 @@ MODULE_AUTHOR("Brandon Jacquelyn Lorraine");
 MODULE_DESCRIPTION("Programming Assignment #2: Character Device Kernal Module");
 MODULE_VERSION("0.1");
 
-
 static int majorNumber;
 
-// Try to export mainBuffer so moddymod2.c can access it
-static char mainBuffer[BUFFER_SIZE]= {0};
-EXPORT_SYMBOL(mainBuffer);
+// Get mainBuffer from shared memory
+extern static char mainBuffer[BUFFER_SIZE]= {0};
 
 static int bufferOccupation = 0;
-// static int bufferReadIndex = 0;
-static int bufferWriteIndex = 0;
+static int bufferReadIndex = 0;
+// static int bufferWriteIndex = 0;
 static struct class *modClass = NULL;
 static struct device *modDevice = NULL;
 
 static int dev_open(struct inode *, struct file *);
 static int dev_release(struct inode *, struct file *);
-// static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
-static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
+static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
+// static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
 
 static struct file_operations fops = {
 	.open = dev_open,
-	// .read = dev_read,
-	.write = dev_write,
+	.read = dev_read,
+	// .write = dev_write,
 	.release = dev_release,
 };
 
@@ -54,6 +45,7 @@ static struct file_operations fops = {
  *  @param len The length of the array of data that is being passed in the const char buffer
  *  @param offset The offset if required
  */
+/* Not needed for Read module
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset) {
 	int bytesToReceive = len;
 	int receiveIndex = 0;
@@ -77,6 +69,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 	return len - bytesToReceive;
 }
+*/
 
 /** @brief This function is called whenever the device is being read from user space
  *  @param filep A pointer to a file object (defined in linux/fs.h)
@@ -84,7 +77,6 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
  *  @param len The length of the b
  *  @param offset The offset if required
  */
- /* Not needed for write module
 static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset) {
 	int errorCount = 0;
 	int sendCount = 0;
@@ -118,7 +110,6 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 		return -EFAULT;
 	}
 }
-*/
 
 /** @brief The device open function that is called each time the device is opened
  *  @param inodep A pointer to an inode object (defined in linux/fs.h)

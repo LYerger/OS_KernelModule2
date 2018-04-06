@@ -4,10 +4,10 @@
 #include<fcntl.h>
 #include<string.h>
 #include<unistd.h>
- 
+
 #define BUFFER_LENGTH 256               ///< The buffer length (crude but fine)
 static char receive[BUFFER_LENGTH];     ///< The receive buffer from the LKM
- 
+
 int main(){
    int ret, fd;
    char stringToSend[BUFFER_LENGTH];
@@ -20,6 +20,7 @@ int main(){
    printf("Type in a short string to send to the kernel module:\n");
    scanf("%[^\n]%*c", stringToSend);                // Read in a string (with spaces)
    printf("Writing message to the device [%s].\n", stringToSend);
+
    ret = write(fd, stringToSend, strlen(stringToSend)); // Send the string to the LKM
    if (ret < 0){
       perror("Failed to write the message to the device.");
@@ -28,9 +29,12 @@ int main(){
  	printf("Write Return: %d\n", ret);
    printf("Press ENTER to read back from the device...\n");
    getchar();
- 
+
+   // To read, must create new fd2 that points to moddymod2
+   fd2 = open("/dev/moddymod2", 0_RDWR);
+
    printf("Reading from the device...\n");
-   ret = read(fd, receive, BUFFER_LENGTH);        // Read the response from the LKM
+   ret = read(fd2, receive, BUFFER_LENGTH);        // Read the response from the LKM
    if (ret < 0){
       perror("Failed to read the message from the device.");
       return errno;
