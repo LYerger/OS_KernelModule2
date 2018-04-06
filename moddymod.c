@@ -13,6 +13,7 @@
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>
+#include <linux/mutex.h>
 
 #define BUFFER_SIZE 1024
 #define DEVICE_NAME "moddymod"
@@ -23,14 +24,15 @@ MODULE_AUTHOR("Brandon Jacquelyn Lorraine");
 MODULE_DESCRIPTION("Programming Assignment #3: 2 Character Device Kernal Modules");
 MODULE_VERSION("0.1");
 
-
 static int majorNumber;
 
 // Try to export mainBuffer so moddymod2.c can access it
 char mainBuffer[BUFFER_SIZE]= {0};
 static int bufferOccupation = 0;
+static DEFINE_MUTEX(moddymod_mutex);
 EXPORT_SYMBOL(mainBuffer);
 EXPORT_SYMBOL(bufferOccupation);
+EXPORT_SYMBOL(moddymod_mutex);
 
 // static int bufferReadIndex = 0;
 static int bufferWriteIndex = 0;
@@ -44,7 +46,7 @@ static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
 static struct file_operations fops = {
 	.open = dev_open,
 	.write = dev_write,
-	.release = dev_release,
+	.release = dev_release
 };
 
 /** @brief This function is called whenever the device is being written to from user space
@@ -56,7 +58,6 @@ static struct file_operations fops = {
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset) {
 	int bytesToReceive = len;
 	int receiveIndex = 0;
-
 	// While there is still room in the buffer and bytes to recieve
 	while (bytesToReceive > 0 && bufferOccupation < BUFFER_SIZE)
 	{
@@ -73,7 +74,8 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 	}
 
 	printk(KERN_INFO "moddymod: Sent %d characters to the user\n", len - bytesToReceive);
-
+	// Release mutex
+   	mutex_unlock(&moddymod_mutex);
 	return len - bytesToReceive;
 }
 
@@ -83,6 +85,11 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
  */
 static int dev_open(struct inode *inodep, struct file *filep) {
    printk(KERN_INFO "moddymod: Device has been opened\n");
+   if (!mutex_trylock(&moddymod_mutex))
+   {
+	printk(KERN_ALERT "moddymod: Device in use by another process");
+	return -EBUSY;
+   }
    return 0;
 }
 
@@ -132,6 +139,10 @@ int init_module(void) {
 	}
 
    	printk(KERN_INFO "moddymod: Device class created correctly\n");
+	//Initialize mutex
+	mutex_init(&moddymod_mutex);
+
+	printk(KERN_INFO "moddymod: Mutex initialized\n");
 
 	return 0;
 }
@@ -143,4 +154,6 @@ void cleanup_module(void) {
 	class_unregister(modClass);                          // unregister the device class
 	class_destroy(modClass);                             // remove the device class
    	unregister_chrdev(majorNumber, DEVICE_NAME);         // unregister the major number
+	// Destroy dynamically allocated mutex
+	mutex_destroy(&moddymod_mutex);
 }

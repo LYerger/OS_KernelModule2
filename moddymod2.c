@@ -6,6 +6,7 @@
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>
+#include <linux/mutex.h>
 
 #define BUFFER_SIZE 1024
 #define DEVICE_NAME "moddymod2"
@@ -21,6 +22,7 @@ static int majorNumber;
 // Get mainBuffer & bufferOccupation from shared memory
 extern char mainBuffer[BUFFER_SIZE];
 extern int bufferOccupation;
+extern struct mutex moddymod_mutex;
 
 static int bufferReadIndex = 0;
 static struct class *modClass = NULL;
@@ -60,12 +62,13 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 			bufferReadIndex = 0;
 		}
 	}
-
+	
 	// If no errors then return the number of characters sent
 	// otherwise, return a bad address message
 	if (errorCount == 0)
 	{
 		printk(KERN_INFO "moddymod2: Sent %d characters to the user\n", sendCount);
+		mutex_unlock(&moddymod_mutex);
 		return sendCount;
 	}
 	else
@@ -73,6 +76,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 		printk(KERN_INFO "moddymod2: Failed to send %d characters to the user\n", sendCount);
 		return -EFAULT;
 	}
+	
 }
 
 /** @brief The device open function that is called each time the device is opened
@@ -81,6 +85,11 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
  */
 static int dev_open(struct inode *inodep, struct file *filep) {
    printk(KERN_INFO "moddymod2: Device has been opened\n");
+   if(!mutex_trylock(&moddymod_mutex))
+   {
+	printk(KERN_ALERT "moddymod2: Device is in use by another process\n");
+	return -EBUSY;
+   }
    return 0;
 }
 
@@ -91,6 +100,7 @@ static int dev_open(struct inode *inodep, struct file *filep) {
  */
 static int dev_release(struct inode *inodep, struct file *filep) {
    printk(KERN_INFO "moddymod2: Device successfully closed\n");
+   
    return 0;
 }
 
