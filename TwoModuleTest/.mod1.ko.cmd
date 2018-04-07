@@ -1,1 +1,0 @@
-cmd_/home/lorraine/Desktop/TwoModuleTest/mod1.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /home/lorraine/Desktop/TwoModuleTest/mod1.ko /home/lorraine/Desktop/TwoModuleTest/mod1.o /home/lorraine/Desktop/TwoModuleTest/mod1.mod.o
